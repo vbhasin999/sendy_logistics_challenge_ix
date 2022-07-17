@@ -3,7 +3,10 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-
+#rename column names so that they don't have spaces
+#remove duplicates 
+#modify 'time' values, pd.to_datetime? research pandas methods to work w time
+#missing values 
 def load_data(train_file: str, test_file: str, rider_file: str):
     """takes in pathnames to the train, test and rider data files and 
     returns pandas.DataFrame objects for the three datasets respectively
@@ -81,7 +84,6 @@ def main():
     # merging train and test dataframes with rider data
     m_train = merge_dataframes(train, riders)
     m_test = merge_dataframes(test, riders)
-
 
 
     print(f"PROCESSED DATA: \ntrain:\n{m_train.head()}\ntest:\n{m_test.head()}")
