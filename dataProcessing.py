@@ -69,3 +69,28 @@ def merge_dataframes(standard_data: pd.DataFrame, rider_data: pd.DataFrame):
         features and the corresponding rider features
     """
     return pd.merge(standard_data,rider_data,on="Rider Id")
+
+def oneHotEncode(df: pd.DataFrame, colNames: list):
+    print(f"before: \n{df.columns}")
+    """takes in a pandas.DataFrame and a list of column names of categorical 
+    variables, converts the columns to one hot encoded columns
+
+    function taken from:
+    https://towardsdatascience.com/deep-neural-networks-for-regression-problems-81321897ca33
+
+    Args:
+        df (pandas.DataFrame): dataframe 
+        colNames (list): list of column names to be converted to one hot
+
+    Returns:
+        pandas.DataFrame: modified dataframe
+    """    
+    for col in colNames:
+        dummies = pd.get_dummies(df[col],prefix=col)
+        df = pd.concat([df,dummies],axis=1)
+
+        #drop the encoded column
+        df.drop([col],axis = 1 , inplace=True)
+        
+    print(f"after: \n{df.head()}")
+    return df
