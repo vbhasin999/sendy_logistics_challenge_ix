@@ -71,7 +71,6 @@ def merge_dataframes(standard_data: pd.DataFrame, rider_data: pd.DataFrame):
     return pd.merge(standard_data,rider_data,on="Rider Id")
 
 def oneHotEncode(df: pd.DataFrame, colNames: list):
-    print(f"before: \n{df.columns}")
     """takes in a pandas.DataFrame and a list of column names of categorical 
     variables, converts the columns to one hot encoded columns
 
@@ -91,6 +90,43 @@ def oneHotEncode(df: pd.DataFrame, colNames: list):
 
         #drop the encoded column
         df.drop([col],axis = 1 , inplace=True)
-        
-    print(f"after: \n{df.head()}")
+    return df
+
+def FENG_weekend(df: pd.DataFrame):
+    """creates a column specifiying if pickup was on a weekend or not
+
+    Args:
+        df (pd.DataFrame): dataframe
+    
+    Returns:
+        df
+    """     
+    df['weekend'] = df['Pickup - Weekday (Mo = 1)'] >= 6
+    return df
+
+def FENG_TODcol(df: pd.DataFrame):
+    """adds a column which specifies the time of day of pick up from one of four
+    categories: morning, afternoon, evening, night
+
+    Args:
+        df (pd.DataFrame): dataframe
+
+    Returns:
+        df
+
+    """   
+
+    #df.loc[(df['Pickup - Time'] >= pd.to_datetime('5:00:00')) & (df['Pickup - Time'] <= pd.to_datetime('5:00:00')), :]["TOD"] = "morning"
+    
+    conditions = [
+   (df['Pickup - Time'] >= pd.to_datetime('05:00:00')) & (df['Pickup - Time'] <= pd.to_datetime('11:59:00')),
+   (df['Pickup - Time'] >= pd.to_datetime('12:00:00')) & (df['Pickup - Time'] <= pd.to_datetime('17:59:00')),
+   (df['Pickup - Time'] >= pd.to_datetime('18:00:00')) & (df['Pickup - Time'] <= pd.to_datetime('19:59:00')),
+   (df['Pickup - Time'] >= pd.to_datetime('20:00:00')) | (df['Pickup - Time'] <= pd.to_datetime('4:59:00')),
+   ]
+
+    values = ['morning','afternoon','evening','night']
+
+    df['TOD'] = np.select(conditions, values)
+    print(df.columns)
     return df

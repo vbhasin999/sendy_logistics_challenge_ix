@@ -3,10 +3,10 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from dataProcessing import *
-#rename column names so that they don't have spaces
+
 #missing values 
 #feature engineering: find a better way to use day of month, maybe merge
-#average rating and number of ratings?
+#average rating and number of ratings, time of day column: morning, afternoon...
 
 def main():
     train_file = "data/Train.csv"
@@ -14,10 +14,6 @@ def main():
     rider_file = "data/Riders.csv"
     train, test, riders = load_data(train_file, test_file, rider_file)
 
-    # feature engineering: making a column which specifies if the pickup
-    # was on a weekend
-    train['weekend'] = train['Pickup - Weekday (Mo = 1)'] >= 6
-    test['weekend'] = test['Pickup - Weekday (Mo = 1)'] >= 6
 
     # specifying which columns to drop from the standard and rider dataframes
     train_cols_to_drop = ['Order No', 'User Id', 'Vehicle Type', 
@@ -33,7 +29,9 @@ def main():
                         'Arrival at Pickup - Day of Month', 
                         'Arrival at Pickup - Weekday (Mo = 1)',
                         'Arrival at Pickup - Time',
-                        'Pickup - Day of Month',]
+                        'Pickup - Day of Month',
+                        'Precipitation in millimeters'
+                        ]
 
     test_cols_to_drop = ['Order No', 'User Id', 'Vehicle Type',
                         'Placement - Day of Month',
@@ -45,7 +43,8 @@ def main():
                         'Arrival at Pickup - Day of Month', 
                         'Arrival at Pickup - Weekday (Mo = 1)',
                         'Arrival at Pickup - Time',
-                        'Pickup - Day of Month',]
+                        'Pickup - Day of Month',
+                        'Precipitation in millimeters']
 
     riders_cols_to_drop = []
 
@@ -65,13 +64,23 @@ def main():
     m_train.drop(columns=['Rider Id'], inplace=True)
     m_test.drop(columns=['Rider Id'], inplace=True)
 
-    print(f"FINAL FEATURES: \n{m_train.columns}")
+    # feature engineering
+    m_train = FENG_TODcol(m_train)
+    m_train = FENG_weekend(m_train)
+
+    print(f"FINAL SELECTED FEATURES: \n{m_train.columns}")
 
     # columns which contain categorical variables
     categorical_cols = ['Personal or Business','Platform Type', 
-     'Pickup - Weekday (Mo = 1)', 'Pickup - Time']
-    
+     'Pickup - Weekday (Mo = 1)', 'Pickup - Time', 'TOD', 'weekend']
+
+    sns.heatmap(m_train[['No_Of_Orders', 'Age', 'Average_Rating',
+       'No_of_Ratings', 'Time from Pickup to Arrival']].corr(), square=True)
+    plt.show()
+
     m_train = oneHotEncode(m_train, categorical_cols)
+    print(f"FINAL FEATURES AFTER ONE HOT ENCODING: \n{m_train.columns}")
+    
     return
 
 
