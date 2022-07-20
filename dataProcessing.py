@@ -2,6 +2,12 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import missingno as msno
+import sklearn
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
+from sklearn.neighbors import KNeighborsClassifier as KNN
+
 ###############################################################################
 # file which contains functions to process teh data and modify features
 ###############################################################################
@@ -92,6 +98,20 @@ def oneHotEncode(df: pd.DataFrame, colNames: list):
         df.drop([col],axis = 1 , inplace=True)
     return df
 
+def imputeMissingVals(df: pd.DataFrame, colName: str):
+    """imputes the missing values for a single column and drops the original
+
+    Args:
+        df (pd.DataFrame): dataFrame
+        colName (str): name of column to be dropped
+    
+    Returns:
+        None
+    """    
+    imp = IterativeImputer(random_state=0)
+    new_temp = imp.fit_transform(df[colName].to_frame())
+    df[colName] = new_temp
+    return
 def FENG_weekend(df: pd.DataFrame):
     """creates a column specifiying if pickup was on a weekend or not
 
@@ -129,3 +149,19 @@ def FENG_TODcol(df: pd.DataFrame):
 
     df['TOD'] = np.select(conditions, values)
     return df
+
+def prepForModel(train_file: str, test_file: str, rider_file: str):
+    """Wrapper function which performs all the necessary data processing
+    to prepare the data for the ML model. cleans data, merges dataframes,
+    imputes missing data, adds engineered feature columns and one hot encodes
+    categorical variables
+
+    Args:
+        train_file (str): pathname to train data file
+        test_file (str): pathname to test data file
+        rider_file (str): pathname to rider data file
+    
+    Returns:
+        (train_X, train_y, test_X)
+    """    
+    return

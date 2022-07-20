@@ -3,10 +3,16 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from dataProcessing import *
+import missingno as msno
+import sklearn
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
+from sklearn.neighbors import KNeighborsClassifier as KNN
 
 #missing values 
 #feature engineering: rider tiers? keep original features after making new column?
 #low corr for rider features
+#code organization: make a wrapper function that does all the data processing
 
 def main():
     train_file = "data/Train.csv"
@@ -74,16 +80,17 @@ def main():
     categorical_cols = ['Personal or Business','Platform Type', 
      'Pickup - Weekday (Mo = 1)', 'Pickup - Time', 'TOD', 'weekend']
 
-    sns.heatmap(m_train[['No_Of_Orders', 'Age', 'Average_Rating',
-       'No_of_Ratings', 'Time from Pickup to Arrival']].corr(), square=True)\
+    # sns.heatmap(m_train[['No_Of_Orders', 'Age', 'Average_Rating',
+    #    'No_of_Ratings', 'Time from Pickup to Arrival']].corr(), square=True)
 
+    imputeMissingVals(m_train, 'Temperature')
     
-    sns.catplot(data=m_train,x='TOD',y='Time from Pickup to Arrival',col='weekend')
-    sns.catplot(data=m_train,x='Pickup - Weekday (Mo = 1)',
-    y='Time from Pickup to Arrival', col='TOD')
-    sns.catplot(data=m_train,x='weekend',y='Time from Pickup to Arrival')
-    sns.catplot(data=m_train,x='TOD',y='Time from Pickup to Arrival')
-    plt.show()
+    # sns.catplot(data=m_train,x='TOD',y='Time from Pickup to Arrival',col='weekend')
+    # sns.catplot(data=m_train,x='Pickup - Weekday (Mo = 1)',
+    # y='Time from Pickup to Arrival', col='TOD')
+    # sns.catplot(data=m_train,x='weekend',y='Time from Pickup to Arrival')
+    # sns.catplot(data=m_train,x='TOD',y='Time from Pickup to Arrival')
+    # plt.show()
 
     m_train = oneHotEncode(m_train, categorical_cols)
     print(f"FINAL FEATURES AFTER ONE HOT ENCODING: \n{m_train.columns}")    
