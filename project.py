@@ -74,15 +74,19 @@ def main():
     categorical_cols = ['Personal or Business','Platform Type', 
      'Pickup - Weekday (Mo = 1)', 'Pickup - Time', 'TOD', 'weekend']
 
-    # sns.heatmap(m_train[['No_Of_Orders', 'Age', 'Average_Rating',
-    #    'No_of_Ratings', 'Time from Pickup to Arrival']].corr(), square=True)
-    # plt.show()
+    sns.heatmap(m_train[['No_Of_Orders', 'Age', 'Average_Rating',
+       'No_of_Ratings', 'Time from Pickup to Arrival']].corr(), square=True)\
+
+    
+    sns.catplot(data=m_train,x='TOD',y='Time from Pickup to Arrival',col='weekend')
+    sns.catplot(data=m_train,x='Pickup - Weekday (Mo = 1)',
+    y='Time from Pickup to Arrival', col='TOD')
+    sns.catplot(data=m_train,x='weekend',y='Time from Pickup to Arrival')
+    sns.catplot(data=m_train,x='TOD',y='Time from Pickup to Arrival')
+    plt.show()
 
     m_train = oneHotEncode(m_train, categorical_cols)
-    print(f"FINAL FEATURES AFTER ONE HOT ENCODING: \n{m_train.columns}")
-
-    print(m_train.No_Of_Orders.describe())
-    
+    print(f"FINAL FEATURES AFTER ONE HOT ENCODING: \n{m_train.columns}")    
     return
 
 

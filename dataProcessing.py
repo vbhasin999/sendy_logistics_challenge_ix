@@ -128,5 +128,4 @@ def FENG_TODcol(df: pd.DataFrame):
     values = ['morning','afternoon','evening','night']
 
     df['TOD'] = np.select(conditions, values)
-    print(df.columns)
     return df
