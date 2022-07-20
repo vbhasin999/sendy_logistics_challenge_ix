@@ -163,5 +163,97 @@ def prepForModel(train_file: str, test_file: str, rider_file: str):
     
     Returns:
         (train_X, train_y, test_X)
-    """    
-    return
+    """ 
+    train_file = "data/Train.csv"
+    test_file = "data/Test.csv"
+    rider_file = "data/Riders.csv"
+    train, test, riders = load_data(train_file, test_file, rider_file)
+
+
+    # specifying which columns to drop from the standard and rider dataframes
+    train_cols_to_drop = ['Order No', 'User Id', 'Vehicle Type', 
+                        'Arrival at Destination - Day of Month',
+                        'Arrival at Destination - Weekday (Mo = 1)',
+                        'Arrival at Destination - Time',
+                        'Placement - Day of Month',
+                        'Placement - Weekday (Mo = 1)',
+                        'Placement - Time',
+                        'Confirmation - Day of Month', 
+                        'Confirmation - Weekday (Mo = 1)',
+                        'Confirmation - Time',
+                        'Arrival at Pickup - Day of Month', 
+                        'Arrival at Pickup - Weekday (Mo = 1)',
+                        'Arrival at Pickup - Time',
+                        'Pickup - Day of Month',
+                        'Precipitation in millimeters'
+                        ]
+
+    test_cols_to_drop = ['Order No', 'User Id', 'Vehicle Type',
+                        'Placement - Day of Month',
+                        'Placement - Weekday (Mo = 1)',
+                        'Placement - Time',
+                        'Confirmation - Day of Month', 
+                        'Confirmation - Weekday (Mo = 1)',
+                        'Confirmation - Time',
+                        'Arrival at Pickup - Day of Month', 
+                        'Arrival at Pickup - Weekday (Mo = 1)',
+                        'Arrival at Pickup - Time',
+                        'Pickup - Day of Month',
+                        'Precipitation in millimeters']
+
+    riders_cols_to_drop = []
+
+    # time columns remaining which need to be converted to datetime objects
+    time_cols = ['Pickup - Time']
+
+    # getting the order numbers for the test dataset
+    order_no_test = test['Order No'].to_frame()
+
+    # removing columns from the dataframes
+    clean_data(train, train_cols_to_drop, time_cols)
+    clean_data(test, test_cols_to_drop, time_cols)
+    clean_data(riders, riders_cols_to_drop, [])
+
+    # merging train and test dataframes with rider data
+    m_train = merge_dataframes(train, riders)
+    m_test = merge_dataframes(test, riders)
+
+    # dropping rider ID column after dataframes have been merged
+    m_train.drop(columns=['Rider Id'], inplace=True)
+    m_test.drop(columns=['Rider Id'], inplace=True)
+
+    # feature engineering
+    m_train = FENG_TODcol(m_train)
+    m_train = FENG_weekend(m_train)
+
+    m_test = FENG_TODcol(m_test)
+    m_test = FENG_weekend(m_test)
+    
+    imputeMissingVals(m_train, 'Temperature')
+    imputeMissingVals(m_test, 'Temperature')
+
+    # columns which contain categorical variables
+    categorical_cols = ['Personal or Business','Platform Type', 
+     'Pickup - Weekday (Mo = 1)', 'Pickup - Time', 'TOD', 'weekend']
+
+    # sns.heatmap(m_train[['No_Of_Orders', 'Age', 'Average_Rating',
+    #    'No_of_Ratings', 'Time from Pickup to Arrival']].corr(), square=True)
+
+    
+    # sns.catplot(data=m_train,x='TOD',y='Time from Pickup to Arrival',col='weekend')
+    # sns.catplot(data=m_train,x='Pickup - Weekday (Mo = 1)',
+    # y='Time from Pickup to Arrival', col='TOD')
+    # sns.catplot(data=m_train,x='weekend',y='Time from Pickup to Arrival')
+    # sns.catplot(data=m_train,x='TOD',y='Time from Pickup to Arrival')
+    # plt.show()
+
+
+    m_train = oneHotEncode(m_train, categorical_cols)
+    m_test = oneHotEncode(m_test, categorical_cols)
+     
+    y = m_train['Time from Pickup to Arrival'].to_frame()
+    
+    X = m_train.drop('Time from Pickup to Arrival', axis=1)
+    X.drop('Pickup - Time_2022-07-21 01:00:00',axis=1, inplace=True)
+    print(f"m_train: \n{X.columns}\ntest:\n{m_test.columns}")
+    return (X, y, m_test, order_no_test)
