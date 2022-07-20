@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 from dataProcessing import *
 
 #missing values 
-#feature engineering: find a better way to use day of month, maybe merge
-#average rating and number of ratings, time of day column: morning, afternoon...
+#feature engineering: rider tiers? keep original features after making new column?
+#low corr for rider features
 
 def main():
     train_file = "data/Train.csv"
@@ -74,12 +74,14 @@ def main():
     categorical_cols = ['Personal or Business','Platform Type', 
      'Pickup - Weekday (Mo = 1)', 'Pickup - Time', 'TOD', 'weekend']
 
-    sns.heatmap(m_train[['No_Of_Orders', 'Age', 'Average_Rating',
-       'No_of_Ratings', 'Time from Pickup to Arrival']].corr(), square=True)
-    plt.show()
+    # sns.heatmap(m_train[['No_Of_Orders', 'Age', 'Average_Rating',
+    #    'No_of_Ratings', 'Time from Pickup to Arrival']].corr(), square=True)
+    # plt.show()
 
     m_train = oneHotEncode(m_train, categorical_cols)
     print(f"FINAL FEATURES AFTER ONE HOT ENCODING: \n{m_train.columns}")
+
+    print(m_train.No_Of_Orders.describe())
     
     return
 
