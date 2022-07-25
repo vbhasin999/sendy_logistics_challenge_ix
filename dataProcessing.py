@@ -254,18 +254,20 @@ def prepForModel(train_file: str, test_file: str, rider_file: str):
     m_test = oneHotEncode(m_test, categorical_cols)
      
     y = m_train['Time from Pickup to Arrival'].to_frame()
-    
+    print(f"X: \n{m_train.columns}\ny:\n{m_test.columns}")
     X = m_train.drop('Time from Pickup to Arrival', axis=1)
-    X.drop('Pickup - Time_2022-07-21 01:00:00',axis=1, inplace=True) #Fix to anomaly processing
+    X.drop('Pickup - Time_2022-07-25 01:00:00',axis=1, inplace=True) #Fix to anomaly processing
 
     scaler = StandardScaler()
     # Fit the scaler object to the training data and then standardise.
     X_train = scaler.fit_transform(X)
+    
     X_train = X_train.astype(np.float32)
     # Standardise the testing data using the same scaler object.
     X_test = scaler.transform(m_test)
     X_test = X_test.astype(np.float32)
 
     y = y.astype(np.float32)
+    y = y.to_numpy()
 
     return (X_train, y, X_test, order_no_test)
