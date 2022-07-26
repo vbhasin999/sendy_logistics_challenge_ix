@@ -11,7 +11,7 @@ from sklearn.preprocessing import StandardScaler
 
 
 ###############################################################################
-# file which contains functions to process teh data and modify features
+# file which contains functions to process the data and modify features
 ###############################################################################
 def load_data(train_file: str, test_file: str, rider_file: str):
     """takes in pathnames to the train, test and rider data files and 
@@ -111,8 +111,8 @@ def imputeMissingVals(df: pd.DataFrame, colName: str):
         None
     """    
     imp = IterativeImputer(random_state=0)
-    new_temp = imp.fit_transform(df[colName].to_frame())
-    df[colName] = new_temp
+    new_col = imp.fit_transform(df[colName].to_frame())
+    df[colName] = new_col
     return
 def FENG_weekend(df: pd.DataFrame):
     """creates a column specifiying if pickup was on a weekend or not
@@ -136,10 +136,7 @@ def FENG_TODcol(df: pd.DataFrame):
     Returns:
         df
 
-    """   
-
-    #df.loc[(df['Pickup - Time'] >= pd.to_datetime('5:00:00')) & (df['Pickup - Time'] <= pd.to_datetime('5:00:00')), :]["TOD"] = "morning"
-    
+    """       
     conditions = [
    (df['Pickup - Time'] >= pd.to_datetime('05:00:00')) & (df['Pickup - Time'] <= pd.to_datetime('11:59:00')),
    (df['Pickup - Time'] >= pd.to_datetime('12:00:00')) & (df['Pickup - Time'] <= pd.to_datetime('17:59:00')),
@@ -164,7 +161,7 @@ def prepForModel(train_file: str, test_file: str, rider_file: str):
         rider_file (str): pathname to rider data file
     
     Returns:
-        (train_X, train_y, test_X)
+        (train_X, train_y, test_X) as np.ndarray types
     """ 
     train_file = "data/Train.csv"
     test_file = "data/Test.csv"

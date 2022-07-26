@@ -5,6 +5,7 @@ import torch.utils.data as data_utils
 from torch import optim
 import math
 import numpy as np
+import torchvision
 
 class RegNet(nn.Module):
     def __init__(self):
