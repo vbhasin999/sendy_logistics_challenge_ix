@@ -114,6 +114,13 @@ def imputeMissingVals(df: pd.DataFrame, colName: str):
     new_col = imp.fit_transform(df[colName].to_frame())
     df[colName] = new_col
     return
+
+def remove_time_outliers(df: pd.DataFrame):
+    filtered_df = df.loc[(df['Pickup - Time'] >= pd.to_datetime('06:00:00'))& \
+        (df['Pickup - Time'] <= pd.to_datetime('23:00:00'))]
+    
+    return filtered_df
+
 def FENG_weekend(df: pd.DataFrame):
     """creates a column specifiying if pickup was on a weekend or not
 
@@ -221,6 +228,9 @@ def prepForModel(train_file: str, test_file: str, rider_file: str):
     m_train.drop(columns=['Rider Id'], inplace=True)
     m_test.drop(columns=['Rider Id'], inplace=True)
 
+    # only keep rows where the pickup time is between 6AM and 11PM (inclusive)
+    m_train = remove_time_outliers(m_train)
+
     # feature engineering
     m_train = FENG_TODcol(m_train)
     m_train = FENG_weekend(m_train)
@@ -235,36 +245,24 @@ def prepForModel(train_file: str, test_file: str, rider_file: str):
     categorical_cols = ['Personal or Business','Platform Type', 
      'Pickup - Weekday (Mo = 1)', 'Pickup - Time', 'TOD', 'weekend']
 
-    # sns.heatmap(m_train[['No_Of_Orders', 'Age', 'Average_Rating',
-    #    'No_of_Ratings', 'Time from Pickup to Arrival']].corr(), square=True)
-
     
-    # sns.catplot(data=m_train,x='TOD',y='Time from Pickup to Arrival',col='weekend')
-    # sns.catplot(data=m_train,x='Pickup - Weekday (Mo = 1)',
-    # y='Time from Pickup to Arrival', col='TOD')
-    # sns.catplot(data=m_train,x='weekend',y='Time from Pickup to Arrival')
-    # sns.catplot(data=m_train,x='TOD',y='Time from Pickup to Arrival')
-    # plt.show()
-
-
     m_train = oneHotEncode(m_train, categorical_cols)
     m_test = oneHotEncode(m_test, categorical_cols)
-     
-    y = m_train['Time from Pickup to Arrival'].to_frame()
-    print(f"X: \n{m_train.columns}\ny:\n{m_test.columns}")
+    
+    # separating labels and features
+    y = m_train['Time from Pickup to Arrival'].ravel() #.to_frame()
     X = m_train.drop('Time from Pickup to Arrival', axis=1)
-    X.drop('Pickup - Time_2022-07-25 01:00:00',axis=1, inplace=True) #Fix to anomaly processing
-
+   
     scaler = StandardScaler()
     # Fit the scaler object to the training data and then standardise.
     X_train = scaler.fit_transform(X)
     
     X_train = X_train.astype(np.float32)
+
     # Standardise the testing data using the same scaler object.
     X_test = scaler.transform(m_test)
     X_test = X_test.astype(np.float32)
 
     y = y.astype(np.float32)
-    y = y.to_numpy()
 
     return (X_train, y, X_test, order_no_test)
