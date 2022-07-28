@@ -23,7 +23,7 @@ def predict(model, X_test, pathname, order_no_test):
 
     order_no_test['Time from Pickup to Arrival'] = pd.Series(predictions)
     order_no_test.set_index('Order No', inplace=True)
-    order_no_test.to_csv('predictions.csv')
+    order_no_test.to_csv(pathname)
     return
 
 
