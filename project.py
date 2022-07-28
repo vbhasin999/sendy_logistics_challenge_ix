@@ -3,86 +3,66 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from dataProcessing import *
-
-#missing values 
-#feature engineering: rider tiers? keep original features after making new column?
-#low corr for rider features
-
-def main():
-    train_file = "data/Train.csv"
-    test_file = "data/Test.csv"
-    rider_file = "data/Riders.csv"
-    train, test, riders = load_data(train_file, test_file, rider_file)
+import missingno as msno
+from sklearn import metrics
+from sklearn.linear_model import LinearRegression
+from xgboost import XGBRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import AdaBoostRegressor
+from sklearn.model_selection import cross_val_score
+from model import *
 
 
-    # specifying which columns to drop from the standard and rider dataframes
-    train_cols_to_drop = ['Order No', 'User Id', 'Vehicle Type', 
-                        'Arrival at Destination - Day of Month',
-                        'Arrival at Destination - Weekday (Mo = 1)',
-                        'Arrival at Destination - Time',
-                        'Placement - Day of Month',
-                        'Placement - Weekday (Mo = 1)',
-                        'Placement - Time',
-                        'Confirmation - Day of Month', 
-                        'Confirmation - Weekday (Mo = 1)',
-                        'Confirmation - Time',
-                        'Arrival at Pickup - Day of Month', 
-                        'Arrival at Pickup - Weekday (Mo = 1)',
-                        'Arrival at Pickup - Time',
-                        'Pickup - Day of Month',
-                        'Precipitation in millimeters'
-                        ]
+def predict(model, X_test, pathname, order_no_test):
+    model.eval()
+    predictions = []
 
-    test_cols_to_drop = ['Order No', 'User Id', 'Vehicle Type',
-                        'Placement - Day of Month',
-                        'Placement - Weekday (Mo = 1)',
-                        'Placement - Time',
-                        'Confirmation - Day of Month', 
-                        'Confirmation - Weekday (Mo = 1)',
-                        'Confirmation - Time',
-                        'Arrival at Pickup - Day of Month', 
-                        'Arrival at Pickup - Weekday (Mo = 1)',
-                        'Arrival at Pickup - Time',
-                        'Pickup - Day of Month',
-                        'Precipitation in millimeters']
+    for ex in X_test:
+        pred = model.forward(torch.tensor(ex))
+        predictions.append(pred.detach().numpy()[0])
 
-    riders_cols_to_drop = []
+    order_no_test['Time from Pickup to Arrival'] = pd.Series(predictions)
+    order_no_test.set_index('Order No', inplace=True)
+    order_no_test.to_csv('predictions.csv')
+    return
 
-    # time columns remaining which need to be converted to datetime objects
-    time_cols = ['Pickup - Time']
 
-    # removing columns from the dataframes
-    clean_data(train, train_cols_to_drop, time_cols)
-    clean_data(test, test_cols_to_drop, time_cols)
-    clean_data(riders, riders_cols_to_drop, [])
+def compare_models(X,y):
+    RFReg = RandomForestRegressor()
+    XGBReg = XGBRegressor()
+    ABReg = AdaBoostRegressor()
+    LinReg = LinearRegression()
 
-    # merging train and test dataframes with rider data
-    m_train = merge_dataframes(train, riders)
-    m_test = merge_dataframes(test, riders)
+    RF_score = -cross_val_score(RFReg, X=X, y=y, scoring='neg_root_mean_squared_error')
+    XGB_score = -cross_val_score(XGBReg, X=X, y=y, scoring='neg_root_mean_squared_error')
+    AB_score = -cross_val_score(ABReg, X=X, y=y, scoring='neg_root_mean_squared_error')
+    LinReg_score = -cross_val_score(LinReg, X=X, y=y, scoring='neg_root_mean_squared_error')
+    x = np.arange(5)
 
-    # dropping rider ID column after dataframes have been merged
-    m_train.drop(columns=['Rider Id'], inplace=True)
-    m_test.drop(columns=['Rider Id'], inplace=True)
+    means = [RF_score.mean(), XGB_score.mean(), AB_score.mean(), LinReg_score.mean()]
+    print(means)
+    names = ['RF', 'XGB', 'AB']
 
-    # feature engineering
-    m_train = FENG_TODcol(m_train)
-    m_train = FENG_weekend(m_train)
+    comb_scores = np.hstack((RF_score.reshape((5,1)), XGB_score.reshape((5,1)), AB_score.reshape((5,1)), LinReg_score.reshape((5,1))))
+    df = pd.DataFrame(comb_scores, columns=['RandomForest', 'XGBoost', 'AdaBoost', 'LinReg'])
 
-    print(f"FINAL SELECTED FEATURES: \n{m_train.columns}")
-
-    # columns which contain categorical variables
-    categorical_cols = ['Personal or Business','Platform Type', 
-     'Pickup - Weekday (Mo = 1)', 'Pickup - Time', 'TOD', 'weekend']
-
-    # sns.heatmap(m_train[['No_Of_Orders', 'Age', 'Average_Rating',
-    #    'No_of_Ratings', 'Time from Pickup to Arrival']].corr(), square=True)
-    # plt.show()
-
-    m_train = oneHotEncode(m_train, categorical_cols)
-    print(f"FINAL FEATURES AFTER ONE HOT ENCODING: \n{m_train.columns}")
-
-    print(m_train.No_Of_Orders.describe())
+    print(df.head())
+    dplt = sns.displot(df.loc[:,['RandomForest','XGBoost','AdaBoost']], kind="kde")
+    dplt.set(xlabel='Validation error', ylabel='Density', title='cross val scores distribution')
+    plt.show()
     
+    return
+
+
+
+def main():  
+    X_train, y_train, X_test, order_no_test = prepForModel('data/Train.csv', 
+                                            'data/Test.csv', 'data/Riders.csv') 
+    
+    trainNet(torch.tensor(X_train), torch.tensor(y_train))
+    trained_net = RegNet()
+    trained_net.load_state_dict(torch.load('saved_model.pth'))
+    predict(trained_net, X_test, 'predictions.csv', order_no_test)
     return
 
 
